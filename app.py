@@ -11,7 +11,7 @@ MAX_RETRY_FOR_SESSION = 5
 BACK_OFF_FACTOR = 0.1
 ERROR_CODES = [504]
 API = 'https://3gu4uqkxbg.execute-api.ap-south-1.amazonaws.com/default/csv_chat'
-API_KEY = os.environ['APIKEY']
+API_KEY = st.secrets["APIKEY"]
 
 
 def output_parser(responses):
