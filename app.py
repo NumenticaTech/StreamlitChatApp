@@ -1,7 +1,7 @@
-import os
 import streamlit as st
 import requests
 import json
+import pandas as pd
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -17,17 +17,20 @@ API_KEY = st.secrets["APIKEY"]
 def output_parser(responses):
     try:
         res = ""
+        table_item = None
         if "benefits" in responses:
             if isinstance(responses['benefits'], list):
                 res = res + "  \n"+responses['benefits'][0]
         if "plans" in responses:
-            for plan in responses["plans"]:
-                for plan_id, plan_name in plan["Plan Name"].items():
-                    res = res + "  \n"+plan_name
-        return res
+            if isinstance(responses['plans'], list):
+                df = pd.DataFrame(responses['plans'][0]).reset_index(drop=True)
+                if 'Plan Name' in df.columns and 'Cost(OMR)' in df.columns:
+                    table_item = df[['Plan Name', 'Cost(OMR)']]
+                    table_item.index = table_item.index + 1
+        return res, table_item
     except Exception as e:
         print(e)
-        return None
+        return None, None
 
 
 def requests_retry_session():
@@ -57,13 +60,13 @@ def call_openai_api(input_text):
         responses = session.post(url=API, headers=headers, data=payload)
         responses = responses.json()
         print(responses)
-        result = output_parser(responses)
+        result, table = output_parser(responses)
         if result:
-            return result
-        return None
+            return result, table
+        return None,None
     except Exception as e:
         print(str(e))
-        return None  # Indicate error for display purposes
+        return None,None
 
 
 st.title("Chat Bot")
@@ -82,9 +85,13 @@ if prompt := st.chat_input("Please write your query here"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        output = call_openai_api(prompt)
+        output, table = call_openai_api(prompt)
         if output:
             st.write(output)
+            st.session_state.messages.append({"role": "assistant", "content": output})
+            if table is not None:
+                st.table(table)
+                st.session_state.messages.append({"role": "assistant", "content": output})
         else:
             st.error("An error occurred,Please try again!")
-    st.session_state.messages.append({"role": "assistant", "content": output})
+    # st.session_state.messages.append({"role": "assistant", "content": output})
