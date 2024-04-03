@@ -27,6 +27,7 @@ def output_parser(responses):
                 if 'Plan Name' in df.columns and 'Cost(OMR)' in df.columns:
                     table_item = df[['Plan Name', 'Cost(OMR)']]
                     table_item.index = table_item.index + 1
+                    table_item = table_item.to_markdown(index=False)
         return res, table_item
     except Exception as e:
         print(e)
@@ -90,8 +91,7 @@ if prompt := st.chat_input("Please write your query here"):
             st.write(output)
             st.session_state.messages.append({"role": "assistant", "content": output})
             if table is not None:
-                st.table(table)
+                st.write(table)
                 st.session_state.messages.append({"role": "assistant", "content": table})
         else:
             st.error("An error occurred,Please try again!")
-    # st.session_state.messages.append({"role": "assistant", "content": output})
