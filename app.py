@@ -94,4 +94,5 @@ if prompt := st.chat_input("Please write your query here"):
                 st.write(table)
                 st.session_state.messages.append({"role": "assistant", "content": table})
         else:
+
             st.error("An error occurred,Please try again!")
