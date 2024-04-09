@@ -62,7 +62,7 @@ def call_openai_api(input_text):
         responses = responses.json()
         print(responses)
         result, table = output_parser(responses)
-        if result:
+        if result or table:
             return result, table
         return None,None
     except Exception as e:
@@ -90,9 +90,9 @@ if prompt := st.chat_input("Please write your query here"):
         if output:
             st.write(output)
             st.session_state.messages.append({"role": "assistant", "content": output})
-            if table is not None:
-                st.write(table)
-                st.session_state.messages.append({"role": "assistant", "content": table})
+        if table is not None:
+            st.write(table)
+            st.session_state.messages.append({"role": "assistant", "content": table})
         else:
 
             st.error("An error occurred,Please try again!")
