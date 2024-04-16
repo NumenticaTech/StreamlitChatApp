@@ -10,8 +10,9 @@ MAX_RETRY = 5
 MAX_RETRY_FOR_SESSION = 5
 BACK_OFF_FACTOR = 0.1
 ERROR_CODES = [504]
-API = 'https://3gu4uqkxbg.execute-api.ap-south-1.amazonaws.com/default/csv_chat'
-API_KEY = st.secrets["APIKEY"]
+API = 'https://3gu4uqkxbg.execute-api.ap-south-1.amazonaws.com/default'
+API_KEY_CSVCHAT = st.secrets["APIKEY_CSVCHAT"]
+API_KEY_BENEFITS = st.secrets["APIKEY_BENEFITS"]
 
 
 def output_parser(responses):
@@ -55,19 +56,24 @@ def call_openai_api(input_text):
         })
         headers = {
             'Content-Type': 'application/json',
-            'x-api-key': API_KEY
+            'x-api-key': API_KEY_CSVCHAT
         }
         session = requests_retry_session()
-        responses = session.post(url=API, headers=headers, data=payload)
-        responses = responses.json()
-        print(responses)
-        result, table = output_parser(responses)
+        responses_df = session.post(url=API+'/csv_chat', headers=headers, data=payload)
+        responses_df_json = json.loads(responses_df.json()['body'])
+        if responses_df.status_code == 200:
+            headers['x-api-key'] = API_KEY_BENEFITS
+            responses_benefits = session.post(url=API + '/benefits', headers=headers,
+                                              data=json.dumps(responses_df_json))
+            if responses_benefits.status_code == 200:
+                responses_df_json['benefits'] = responses_benefits.json()['benefits']
+        result, table = output_parser(responses_df_json)
         if result or table:
             return result, table
-        return None,None
+        return None, None
     except Exception as e:
-        print(str(e))
-        return None,None
+        print(e)
+        return None, None
 
 
 st.title("Chat Bot")
@@ -96,3 +102,5 @@ if prompt := st.chat_input("Please write your query here"):
         else:
 
             st.error("An error occurred,Please try again!")
+
+# call_openai_api("Can you suggest any plans which have at least 20 GB data per month")
