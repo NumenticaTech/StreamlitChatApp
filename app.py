@@ -46,6 +46,9 @@ def requests_retry_session():
 
 
 def call_openai_api(input_text):
+    responses_df = None
+    responses_df_json = None
+    responses_benefits = None
     try:
         payload = json.dumps({
             "query": input_text,
@@ -63,6 +66,7 @@ def call_openai_api(input_text):
         responses_df_json = json.loads(responses_df.json()['body'])
         if responses_df.status_code == 200:
             headers['x-api-key'] = API_KEY_BENEFITS
+            session = requests_retry_session()
             responses_benefits = session.post(url=API + '/benefits', headers=headers,
                                               data=json.dumps(responses_df_json))
             if responses_benefits.status_code == 200:
